@@ -127,7 +127,7 @@ app.post('/submitC', (req, res) => {
 
 
 // Start Server 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(process.env.PORT || PORT, () => {
+    console.log(`Server is running `);
 }); 
       
