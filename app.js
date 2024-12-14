@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection (replace `<dbname>` with your database name)
-mongoose.connect('mongodb+srv://sanket411:Sanket411@cluster0.ea7ih.mongodb.net/<abis?retryWrites=true&w=majority', {
+mongoose.connect('mongodb+srv://sanket411:Sanket411@cluster0.ea7ih.mongodb.net/abis?retryWrites=true&w=majority', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
@@ -22,22 +22,22 @@ mongoose.connect('mongodb+srv://sanket411:Sanket411@cluster0.ea7ih.mongodb.net/<
 
 // Define Schemas
 const applicationSchema = new mongoose.Schema({  
-    f_name: String,
-    l_name: String,
-    email_id: String,
-    mobile_no: String,
-    cover_letter: String,
-    experience: String,
-    start_date: String,
-    terms_of_services: Boolean,
-}, { collection: 'applications' }); // Explicitly specify the collection name
+    f_name: { type: String, required: true },
+    l_name: { type: String, required: true },
+    email_id: { type: String, required: true, unique: true }, // Prevent duplicate emails
+    mobile_no: { type: String, required: true },
+    cover_letter: { type: String, required: false },
+    experience: { type: String, required: false },
+    start_date: { type: String, required: false },
+    terms_of_services: { type: Boolean, required: true },
+}, { collection: 'applications' });
 
 const contactSchema = new mongoose.Schema({
-    name: String,
-    email: String,
-    subject: String,
-    message: String,
-}, { collection: 'contact_form' }); // Explicitly specify the collection name
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true }, // Prevent duplicate emails
+    subject: { type: String, required: true },
+    message: { type: String, required: true },
+}, { collection: 'contact_form' });
 
 // Define Models
 const Application = mongoose.model('Application', applicationSchema);
@@ -104,13 +104,22 @@ app.post('/submit', (req, res) => {
             `);
         })
         .catch((err) => {
-            console.error(err);
-            res.send(`
-                <script>
-                    alert('Submission failed or Already Applied. Please try again!!!');
-                    window.location.href = '/form';
-                </script>
-            `);
+            if (err.code === 11000) { // Duplicate key error
+                res.send(`
+                    <script>
+                        alert('You have already applied with this email. Duplicate entries are not allowed.');
+                        window.location.href = '/form';
+                    </script>
+                `);
+            } else {
+                console.error(err);
+                res.send(`
+                    <script>
+                        alert('Submission failed. Please try again.');
+                        window.location.href = '/form';
+                    </script>
+                `);
+            }
         });
 });
 
@@ -131,13 +140,22 @@ app.post('/submitC', (req, res) => {
             `);
         })
         .catch((err) => {
-            console.error(err);
-            res.send(`
-                <script>
-                    alert('Submission failed. Please try again.');
-                    window.location.href = '/contact';
-                </script>
-            `);
+            if (err.code === 11000) { // Duplicate key error
+                res.send(`
+                    <script>
+                        alert('You have already contacted us with this email. Duplicate entries are not allowed.');
+                        window.location.href = '/contact';
+                    </script>
+                `);
+            } else {
+                console.error(err);
+                res.send(`
+                    <script>
+                        alert('Submission failed. Please try again.');
+                        window.location.href = '/contact';
+                    </script>
+                `);
+            }
         });
 });
 
